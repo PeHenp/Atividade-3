@@ -1,1 +1,194 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+typedef struct Documento {
+    int id;
+    char nome[50];
+    int paginas;
+    int prioridade;
+    struct Documento* prox;
+} Documento;
+
+typedef struct {
+    Documento* inicio;
+} Fila;
+
+int contadorID = 0;
+
+void inicializarFila(Fila* f) {
+    f->inicio = NULL;
+}
+
+int definirPrioridade(int paginas) {
+    if (paginas <= 5)
+        return 3;
+    else if (paginas <= 20)
+        return 2;
+    else
+        return 1;
+}
+
+Documento* criarDocumento(int id, char nome[], int paginas, int prioridade) {
+    Documento* novo = (Documento*) malloc(sizeof(Documento));
+    if (!novo) {
+        printf("Erro de alocacao\n");
+        exit(1);
+    }
+
+    novo->id = id;
+    strcpy(novo->nome, nome);
+    novo->paginas = paginas;
+    novo->prioridade = prioridade;
+    novo->prox = NULL;
+
+    return novo;
+}
+
+void inserir(Fila* f, char nome[], int paginas) {
+    int prioridade = definirPrioridade(paginas);
+    Documento* novo = criarDocumento(++contadorID, nome, paginas, prioridade);
+
+    if (f->inicio == NULL || prioridade < f->inicio->prioridade) {
+        novo->prox = f->inicio;
+        f->inicio = novo;
+        return;
+    }
+
+    Documento* atual = f->inicio;
+
+    while (atual->prox != NULL &&
+           atual->prox->prioridade <= prioridade) {
+        atual = atual->prox;
+    }
+
+    novo->prox = atual->prox;
+    atual->prox = novo;
+}
+
+void exibirFila(Fila* f) {
+    Documento* atual = f->inicio;
+
+    printf("\nFila atual:\n");
+
+    while (atual != NULL) {
+        printf("ID: %d | Nome: %s | Paginas: %d | Prioridade: %d\n",
+               atual->id, atual->nome, atual->paginas, atual->prioridade);
+        atual = atual->prox;
+    }
+}
+
+void removerPorID(Fila* f, int id) {
+    Documento* atual = f->inicio;
+    Documento* anterior = NULL;
+
+    while (atual != NULL && atual->id != id) {
+        anterior = atual;
+        atual = atual->prox;
+    }
+
+    if (atual == NULL) {
+        printf("Documento com ID %d nao encontrado.\n", id);
+        return;
+    }
+
+    if (anterior == NULL) {
+        // remoção no início
+        f->inicio = atual->prox;
+    } else {
+        anterior->prox = atual->prox;
+    }
+
+    printf("Removendo documento ID %d | Nome: %s\n", atual->id, atual->nome);
+    free(atual);
+}
+
+int lerInteiroValido() {
+    char buffer[100];
+    char* endptr;
+    long valor;
+
+    while (1) {
+        fgets(buffer, sizeof(buffer), stdin);
+
+        valor = strtol(buffer, &endptr, 10);
+
+        if (endptr == buffer || (*endptr != '\n' && *endptr != '\0')) {
+            printf("Entrada invalida. Digite um numero inteiro: ");
+        } else if (valor <= 0) {
+            printf("Valor deve ser positivo: ");
+        } else {
+            return (int)valor;
+        }
+    }
+}
+
+char lerRespostaSN() {
+    char buffer[10];
+
+    while (1) {
+        fgets(buffer, sizeof(buffer), stdin);
+        char c = tolower(buffer[0]);
+
+        if (c == 's' || c == 'n') {
+            return c;
+        } else {
+            printf("Digite 's' ou 'n': ");
+        }
+    }
+}
+
+void carregarDadosIniciais(Fila* f) {
+    inserir(f, "Documento A", 10);
+    inserir(f, "Documento B", 3);
+    inserir(f, "Documento C", 25);
+}
+
+int main() {
+    Fila f;
+    inicializarFila(&f);
+
+    carregarDadosIniciais(&f);
+
+    exibirFila(&f);
+
+    printf("\nDeseja inserir um novo documento? (s/n): ");
+    char resposta = lerRespostaSN();
+
+    if (resposta == 's') {
+        char nome[50];
+        int paginas;
+
+        printf("Digite o nome do documento: ");
+        fgets(nome, sizeof(nome), stdin);
+        nome[strcspn(nome, "\n")] = '\0';
+
+        printf("Digite o numero de paginas: ");
+        paginas = lerInteiroValido();
+
+        inserir(&f, nome, paginas);
+    }
+
+    exibirFila(&f);
+
+   
+    printf("\nDeseja remover algum documento por ID? (s/n): ");
+    char remover = lerRespostaSN();
+
+    if (remover == 's') {
+        int id;
+
+        printf("Digite o ID do documento a remover: ");
+        id = lerInteiroValido();
+
+        removerPorID(&f, id);
+
+        printf("\nFila apos remocao:\n");
+        exibirFila(&f);
+    }
+
+    printf("\nEncerrando programa.\n");
+    return 0;
+}
 
