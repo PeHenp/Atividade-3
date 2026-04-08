@@ -1,1 +1,104 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
+typedef struct Cliente {
+    int id;
+    int tempoAtendimento;
+    struct Cliente* prox;
+} Cliente;
+
+typedef struct {
+    Cliente* inicio;
+    Cliente* fim;
+} Fila;
+
+void inicializarFila(Fila* f) {
+    f->inicio = NULL;
+    f->fim = NULL;
+}
+
+void enqueue(Fila* f, int id, int tempo) {
+    Cliente* novo = (Cliente*) malloc(sizeof(Cliente));
+    
+    if (novo == NULL) {
+        printf("Erro de alocação!\n");
+        exit(1);
+    }
+
+    novo->id = id;
+    novo->tempoAtendimento = tempo;
+    novo->prox = NULL;
+
+    if (f->fim == NULL) {
+        f->inicio = novo;
+        f->fim = novo;
+    } else {
+        f->fim->prox = novo;
+        f->fim = novo;
+    }
+}
+
+Cliente* dequeue(Fila* f) {
+    if (f->inicio == NULL) return NULL;
+
+    Cliente* removido = f->inicio;
+    f->inicio = f->inicio->prox;
+
+    if (f->inicio == NULL) {
+        f->fim = NULL;
+    }
+
+    return removido;
+}
+
+int main() {
+    Fila fila;
+    inicializarFila(&fila);
+
+    int n;
+
+    while (1) {
+        printf("Digite o número de clientes: ");
+
+        if (scanf("%d", &n) != 1) {
+            printf("Entrada inválida. Tente novamente.\n");
+
+            while (getchar() != '\n');
+            continue;
+        }
+
+        if (n <= 0) {
+            printf("Número de clientes deve ser maior que zero. Tente novamente.\n");
+            continue;
+        }
+
+        break;
+    }
+
+    srand(time(NULL));
+
+    for (int i = 0; i < n; i++) {
+        int id = i + 1;
+        int tempo = 25 + rand() % 6;
+        enqueue(&fila, id, tempo);
+    }
+
+    printf("\nTempo de atendimento varia de 25 a 30 minutos\n");
+    printf("\n--- Atendimento ---\n");
+
+    int tempoEspera = 0;
+
+    while (fila.inicio != NULL) {
+        Cliente* c = dequeue(&fila);
+
+        printf("Cliente %d | Tempo de espera: %d minutos | Tempo de atendimento: %d minutos\n",
+               c->id, tempoEspera, c->tempoAtendimento);
+
+        tempoEspera += c->tempoAtendimento;
+
+        free(c);
+    }
+
+    return 0;
+}
